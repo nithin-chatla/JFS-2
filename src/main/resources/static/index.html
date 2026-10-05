@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Connect | College Management & Event Platform</title>
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js for Rich Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- QRCode.js for Real Scannable Digital Passes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dark-theme">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App Wrapper -->
+  <div id="app" class="app-layout">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-mark">
+          <i data-lucide="sparkles"></i>
+        </div>
+        <div class="logo-text">
+          <h2>Campus<span>Connect</span></h2>
+          <span class="badge-sub">Unified Platform</span>
+        </div>
+      </div>
+
+      <!-- Quick Role Switcher Banner (Crucial for Demo Presentations) -->
+      <div class="role-switcher-box">
+        <div class="role-switcher-header">
+          <span class="role-label">Active Role:</span>
+          <span id="current-role-badge" class="role-badge role-admin">ADMIN</span>
+        </div>
+        <select id="role-select" class="role-dropdown" onchange="CampusApp.switchUserRole(this.value)">
+          <option value="admin">👑 Admin (Dr. Rajesh Raman)</option>
+          <option value="faculty">🎓 Faculty (Prof. Ananya Sharma)</option>
+          <option value="student" selected>🎒 Student (Rahul Verma)</option>
+        </select>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">CORE PLATFORM</div>
+        <button class="nav-item active" data-tab="dashboard" onclick="CampusApp.navigate('dashboard')">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard & Analytics</span>
+        </button>
+
+        <button class="nav-item" data-tab="events" onclick="CampusApp.navigate('events')">
+          <i data-lucide="calendar-days"></i>
+          <span>Campus Events Hub</span>
+          <span class="nav-badge" id="nav-events-count">5</span>
+        </button>
+
+        <button class="nav-item" data-tab="my-passes" onclick="CampusApp.navigate('my-passes')">
+          <i data-lucide="ticket"></i>
+          <span>My Event Passes & QR</span>
+          <span class="nav-badge green" id="nav-tickets-count">2</span>
+        </button>
+
+        <button class="nav-item" data-tab="clubs" onclick="CampusApp.navigate('clubs')">
+          <i data-lucide="users"></i>
+          <span>Clubs & Societies</span>
+        </button>
+
+        <div class="nav-section-title">ACADEMIC & ADMIN</div>
+        <button class="nav-item" data-tab="departments" onclick="CampusApp.navigate('departments')">
+          <i data-lucide="building-2"></i>
+          <span>Departments & Courses</span>
+        </button>
+
+        <button class="nav-item" data-tab="notices" onclick="CampusApp.navigate('notices')">
+          <i data-lucide="bell"></i>
+          <span>Notice Board</span>
+          <span class="nav-badge red" id="nav-notices-count">4</span>
+        </button>
+
+        <button class="nav-item" data-tab="feedback" onclick="CampusApp.navigate('feedback')">
+          <i data-lucide="message-square-plus"></i>
+          <span>Helpdesk & Grievance</span>
+        </button>
+
+        <button class="nav-item" data-tab="reports" onclick="CampusApp.navigate('reports')">
+          <i data-lucide="file-spreadsheet"></i>
+          <span>Data Exports & Reports</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer User Profile -->
+      <div class="sidebar-footer">
+        <div class="user-avatar-wrap">
+          <img id="user-avatar" src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80" alt="Avatar" class="user-avatar">
+          <span class="online-indicator"></span>
+        </div>
+        <div class="user-info">
+          <h4 id="user-name">Rahul Verma</h4>
+          <p id="user-role-text">B.Tech CSE • 3rd Year</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Header Bar -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle" id="sidebar-toggle" onclick="CampusApp.toggleSidebar()">
+            <i data-lucide="menu"></i>
+          </button>
+          <div class="page-title-wrap">
+            <h1 id="page-title">Dashboard & Analytics</h1>
+            <p id="page-subtitle">Unified metrics and campus ecosystem overview</p>
+          </div>
+        </div>
+
+        <div class="header-center">
+          <div class="search-bar">
+            <i data-lucide="search"></i>
+            <input type="text" id="global-search" placeholder="Search events, clubs, circulars, courses..." oninput="CampusApp.handleGlobalSearch(this.value)">
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Quick Action Buttons -->
+          <div class="header-actions">
+            <button class="btn btn-outline btn-sm" onclick="CampusApp.showEventModal()" id="btn-create-event-top">
+              <i data-lucide="plus-circle"></i>
+              <span>Create Event</span>
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="CampusApp.showNoticeModal()" id="btn-post-notice-top">
+              <i data-lucide="megaphone"></i>
+              <span>Post Notice</span>
+            </button>
+          </div>
+
+          <div class="header-status">
+            <div class="live-pill">
+              <span class="pulse-dot"></span>
+              <span>API Live</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic Page Container -->
+      <div class="content-container">
+
+        <!-- ================================================================= -->
+        <!-- TAB 1: DASHBOARD & ANALYTICS -->
+        <!-- ================================================================= -->
+        <section id="tab-dashboard" class="tab-content active">
+          <!-- Hero Banner -->
+          <div class="dashboard-hero">
+            <div class="hero-text">
+              <div class="hero-chip"><i data-lucide="sparkles"></i> Academic Year 2026-27 Active</div>
+              <h2>Welcome to <span class="gradient-text">Campus Connect</span></h2>
+              <p>Experience seamless college governance, real-time event discovery, digital ticket issuance, and student engagement.</p>
+              <div class="hero-cta-row">
+                <button class="btn btn-primary" onclick="CampusApp.navigate('events')">
+                  <i data-lucide="compass"></i> Explore Campus Events
+                </button>
+                <button class="btn btn-glass" onclick="CampusApp.navigate('my-passes')">
+                  <i data-lucide="qr-code"></i> View My Event Passes
+                </button>
+              </div>
+            </div>
+            <div class="hero-graphic">
+              <div class="stat-pill-float p1"><i data-lucide="check-circle-2"></i> 98.4% Fest Attendance</div>
+              <div class="stat-pill-float p2"><i data-lucide="zap"></i> Instant QR Check-in</div>
+            </div>
+          </div>
+
+          <!-- KPI Metric Cards Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon icon-blue"><i data-lucide="calendar"></i></div>
+              <div class="stat-data">
+                <span class="stat-label">Total Events</span>
+                <h3 id="stat-total-events">5</h3>
+                <span class="stat-trend positive"><i data-lucide="arrow-up-right"></i> Active This Month</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon icon-purple"><i data-lucide="ticket"></i></div>
+              <div class="stat-data">
+                <span class="stat-label">Total Registrations</span>
+                <h3 id="stat-total-registrations">1,511</h3>
+                <span class="stat-trend positive"><i data-lucide="arrow-up-right"></i> +32% vs Last Sem</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon icon-green"><i data-lucide="users"></i></div>
+              <div class="stat-data">
+                <span class="stat-label">Enrolled Students</span>
+                <h3 id="stat-total-students">1,380</h3>
+                <span class="stat-trend neutral"><i data-lucide="check"></i> 4 Departments</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon icon-orange"><i data-lucide="shapes"></i></div>
+              <div class="stat-data">
+                <span class="stat-label">Student Clubs</span>
+                <h3 id="stat-total-clubs">4</h3>
+                <span class="stat-trend positive"><i data-lucide="star"></i> 730+ Members</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="charts-row">
+            <!-- Chart 1: Event Categories Distribution -->
+            <div class="chart-card">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <i data-lucide="pie-chart"></i>
+                  <h3>Events by Category</h3>
+                </div>
+                <span class="badge-sub">Live Distribution</span>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="categoryChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart 2: Department-wise Students -->
+            <div class="chart-card">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <i data-lucide="bar-chart-3"></i>
+                  <h3>Students by Department</h3>
+                </div>
+                <span class="badge-sub">Enrollment Strength</span>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="deptChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Popular Events & Recent Activity Grid -->
+          <div class="dashboard-split-grid">
+            <!-- Top Events Card -->
+            <div class="panel-card">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <i data-lucide="flame"></i>
+                  <h3>Trending Campus Events</h3>
+                </div>
+                <button class="btn-link" onclick="CampusApp.navigate('events')">View All</button>
+              </div>
+              <div class="panel-body" id="top-events-list">
+                <!-- Dynamically Populated -->
+              </div>
+            </div>
+
+            <!-- Recent Activity Timeline -->
+            <div class="panel-card">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <i data-lucide="activity"></i>
+                  <h3>Live Platform Activity</h3>
+                </div>
+                <span class="live-pill"><span class="pulse-dot"></span> Real-time</span>
+              </div>
+              <div class="panel-body">
+                <div class="activity-timeline" id="recent-activity-list">
+                  <!-- Dynamically Populated -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- TAB 2: EVENTS HUB -->
+        <!-- ================================================================= -->
+        <section id="tab-events" class="tab-content">
+          <!-- Filters & Action Bar -->
+          <div class="filter-action-bar">
+            <div class="category-pills" id="event-category-filters">
+              <button class="filter-pill active" onclick="CampusApp.filterEventsCategory('ALL')">All Events</button>
+              <button class="filter-pill" onclick="CampusApp.filterEventsCategory('HACKATHON')">Hackathons</button>
+              <button class="filter-pill" onclick="CampusApp.filterEventsCategory('FEST')">College Fests</button>
+              <button class="filter-pill" onclick="CampusApp.filterEventsCategory('WORKSHOP')">Workshops</button>
+              <button class="filter-pill" onclick="CampusApp.filterEventsCategory('SPORTS')">Sports</button>
+              <button class="filter-pill" onclick="CampusApp.filterEventsCategory('SEMINAR')">Seminars</button>
+            </div>
+
+            <div class="action-btn-group">
+              <button class="btn btn-primary" onclick="CampusApp.showEventModal()">
+                <i data-lucide="plus"></i> Add New Event
+              </button>
+            </div>
+          </div>
+
+          <!-- Event Cards Grid -->
+          <div class="events-grid" id="events-grid-container">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- TAB 3: MY EVENT PASSES & DIGITAL QR TICKETS -->
+        <!-- ================================================================= -->
+        <section id="tab-my-passes" class="tab-content">
+          <div class="section-intro">
+            <div>
+              <h2>My Registered Event Passes</h2>
+              <p>Download, print, or present your instant QR code digital ticket at the campus venue for seamless entry.</p>
+            </div>
+            <button class="btn btn-outline" onclick="window.print()">
+              <i data-lucide="printer"></i> Print All Passes
+            </button>
+          </div>
+
+          <div class="tickets-grid" id="my-tickets-container">
+            <!-- Dynamically populated tickets -->
+          </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- TAB 4: CLUBS & SOCIETIES -->
+        <!-- ================================================================= -->
+        <section id="tab-clubs" class="tab-content">
+          <div class="section-intro">
+            <div>
+              <h2>Student Clubs & Societies</h2>
+              <p>Explore student chapters, participate in competitive hackathons, cultural festivals, and technical workshops.</p>
+            </div>
+            <button class="btn btn-primary" onclick="CampusApp.showClubModal()">
+              <i data-lucide="plus"></i> Register New Club
+            </button>
+          </div>
+
+          <div class="clubs-grid" id="clubs-grid-container">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- TAB 5: DEPARTMENTS & COURSES -->
+        <!-- ================================================================= -->
+        <section id="tab-departments" class="tab-content">
+          <div class="section-intro">
+            <div>
+              <h2>Campus Academic Directory</h2>
+              <p>Overview of academic departments, heads of department, and active semester course curriculum.</p>
+            </div>
+            <button class="btn btn-primary" onclick="CampusApp.showCourseModal()">
+              <i data-lucide="book-plus"></i> Add Course
+            </button>
+          </div>
+
+          <div class="dept-cards-grid" id="dept-grid-container">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div class="courses-section-header">
+            <h3><i data-lucide="book-open"></i> Semester Course Catalog</h3>
+            <select id="course-dept-filter" class="form-select-sm" onchange="CampusApp.filterCoursesByDept(this.value)">
+              <option value="ALL">All Departments</option>
+              <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+              <option value="Electronics & Communication">Electronics & Communication</option>
+              <option value="Department of Management Studies">Management Studies</option>
+            </select>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Course Code</th>
+                  <th>Course Title</th>
+                  <th>Department</th>
+                  <th>Credits</th>
+                  <th>Semester</th>
+                  <th>Instructor</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="courses-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- TAB 6: NOTICE BOARD -->
+        <!-- ================================================================= -->
+        <section id="tab-notices" class="tab-content">
+          <div class="section-intro">
+            <div>
+              <h2>Campus Circulars & Notice Board</h2>
+              <p>Official announcements, exam timetables, placement drives, and academic circulars.</p>
+            </div>
+            <button class="btn btn-primary" onclick="CampusApp.showNoticeModal()">
+              <i data-lucide="megaphone"></i> Publish Notice
+            </button>
+          </div>
+
+          <div class="notices-grid" id="notices-container">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- TAB 7: HELPDESK & GRIEVANCE -->
+        <!-- ================================================================= -->
+        <section id="tab-feedback" class="tab-content">
+          <div class="feedback-layout">
+            <!-- Left: Submit Query Form -->
+            <div class="panel-card form-panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <i data-lucide="help-circle"></i>
+                  <h3>Submit Student Query / Feedback</h3>
+                </div>
+              </div>
+              <form id="feedback-form" onsubmit="CampusApp.handleFeedbackSubmit(event)" class="form-body">
+                <div class="form-group">
+                  <label>Your Name</label>
+                  <input type="text" id="fb-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="fb-email" class="form-input" required>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Department</label>
+                    <select id="fb-dept" class="form-input">
+                      <option value="Computer Science & Engineering">CSE</option>
+                      <option value="Electronics & Communication">ECE</option>
+                      <option value="Mechanical Engineering">Mechanical</option>
+                      <option value="Management Studies">MBA</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Category</label>
+                    <select id="fb-category" class="form-input">
+                      <option value="INFRASTRUCTURE">Infrastructure & Lab</option>
+                      <option value="EVENT">Event & Fest Query</option>
+                      <option value="ACADEMIC">Academic & Exam</option>
+                      <option value="HOSTEL">Hostel & Campus Life</option>
+                      <option value="GENERAL">General</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Subject</label>
+                  <input type="text" id="fb-subject" class="form-input" placeholder="Brief summary of your query" required>
+                </div>
+                <div class="form-group">
+                  <label>Detailed Message</label>
+                  <textarea id="fb-message" class="form-textarea" rows="4" placeholder="Explain your request or issue..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                  <i data-lucide="send"></i> Submit Grievance / Query
+                </button>
+              </form>
+            </div>
+
+            <!-- Right: List of Queries & Resolutions -->
+            <div class="panel-card queries-list-panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <i data-lucide="list-checks"></i>
+                  <h3>Campus Queries & Status</h3>
+                </div>
+                <select id="query-status-filter" class="form-select-sm" onchange="CampusApp.filterQueries(this.value)">
+                  <option value="ALL">All Status</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="IN_REVIEW">In Review</option>
+                  <option value="RESOLVED">Resolved</option>
+                </select>
+              </div>
+              <div class="panel-body" id="queries-list-container">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- TAB 8: REPORTS & EXPORTS -->
+        <!-- ================================================================= -->
+        <section id="tab-reports" class="tab-content">
+          <div class="section-intro">
+            <div>
+              <h2>Data Exports & Platform Reports</h2>
+              <p>Generate downloadable CSV spreadsheets and audit reports for college administrators and faculty.</p>
+            </div>
+          </div>
+
+          <div class="reports-grid">
+            <div class="report-card">
+              <div class="report-icon green"><i data-lucide="file-spreadsheet"></i></div>
+              <div class="report-info">
+                <h3>Event Registrations Audit Sheet</h3>
+                <p>Complete attendee records including student names, roll numbers, departments, event IDs, payment status, and ticket codes.</p>
+                <div class="report-actions">
+                  <a href="/api/analytics/export/registrations/csv" class="btn btn-primary" download>
+                    <i data-lucide="download"></i> Download Registrations CSV
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="report-card">
+              <div class="report-icon blue"><i data-lucide="calendar"></i></div>
+              <div class="report-info">
+                <h3>Campus Events Master Report</h3>
+                <p>Complete list of scheduled fests, workshops, hackathons, capacities, venues, coordinators, and fill ratios.</p>
+                <div class="report-actions">
+                  <a href="/api/analytics/export/events/csv" class="btn btn-outline" download>
+                    <i data-lucide="download"></i> Download Events CSV
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="report-card">
+              <div class="report-icon purple"><i data-lucide="database"></i></div>
+              <div class="report-info">
+                <h3>H2 Embedded Database Console</h3>
+                <p>Direct SQL access to verify tables, schemas, relations, and row persistence for evaluation.</p>
+                <div class="report-actions">
+                  <a href="/h2-console" target="_blank" class="btn btn-glass">
+                    <i data-lucide="external-link"></i> Launch H2 SQL Console
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODALS -->
+  <!-- ================================================================= -->
+
+  <!-- Event Registration Modal -->
+  <div class="modal-overlay" id="register-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="reg-modal-event-title">Register for Event</h3>
+        <button class="modal-close" onclick="CampusApp.closeModal('register-modal')">&times;</button>
+      </div>
+      <form onsubmit="CampusApp.submitEventRegistration(event)" class="modal-body">
+        <input type="hidden" id="reg-event-id">
+        <div class="event-brief-box" id="reg-event-brief"></div>
+
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="reg-name" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label>College Email</label>
+          <input type="email" id="reg-email" class="form-input" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department</label>
+            <input type="text" id="reg-dept" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label>Roll / Student ID</label>
+            <input type="text" id="reg-roll" class="form-input" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Contact Phone</label>
+          <input type="tel" id="reg-phone" class="form-input" placeholder="+91 98765 00000" required>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-glass" onclick="CampusApp.closeModal('register-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i data-lucide="check-circle"></i> Confirm & Generate Pass</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create/Edit Event Modal -->
+  <div class="modal-overlay" id="event-modal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 id="event-modal-title">Create Campus Event</h3>
+        <button class="modal-close" onclick="CampusApp.closeModal('event-modal')">&times;</button>
+      </div>
+      <form onsubmit="CampusApp.submitCreateEvent(event)" class="modal-body">
+        <input type="hidden" id="evt-id">
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label>Event Title</label>
+            <input type="text" id="evt-title" class="form-input" placeholder="e.g. National Robotics Championship 2026" required>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="evt-category" class="form-input">
+              <option value="HACKATHON">Hackathon</option>
+              <option value="FEST">College Fest</option>
+              <option value="WORKSHOP">Workshop</option>
+              <option value="SPORTS">Sports League</option>
+              <option value="SEMINAR">Seminar / Conference</option>
+              <option value="CULTURAL">Cultural Event</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Event Description</label>
+          <textarea id="evt-description" class="form-textarea" rows="3" placeholder="Provide complete event details, rules, prizes, and schedule..." required></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Event Type</label>
+            <select id="evt-type" class="form-input">
+              <option value="OFFLINE">Offline on Campus</option>
+              <option value="HYBRID">Hybrid (Offline + Stream)</option>
+              <option value="ONLINE">Online Virtual</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Venue / Location</label>
+            <input type="text" id="evt-venue" class="form-input" placeholder="e.g. Main Auditorium Hall A" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start Date & Time</label>
+            <input type="datetime-local" id="evt-start" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label>End Date & Time</label>
+            <input type="datetime-local" id="evt-end" class="form-input" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max Capacity (Seats)</label>
+            <input type="number" id="evt-capacity" class="form-input" value="150" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>Registration Fee (₹)</label>
+            <input type="number" id="evt-fee" class="form-input" value="0" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Banner Image URL</label>
+          <input type="url" id="evt-banner" class="form-input" placeholder="https://images.unsplash.com/..." value="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Organizer Name / Club</label>
+            <input type="text" id="evt-organizer" class="form-input" placeholder="e.g. ByteCraft Coding Club" required>
+          </div>
+          <div class="form-group">
+            <label>Organizer Email</label>
+            <input type="email" id="evt-organizer-email" class="form-input" placeholder="events@campusconnect.edu" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-glass" onclick="CampusApp.closeModal('event-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i data-lucide="save"></i> Save & Publish Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Post Notice Modal -->
+  <div class="modal-overlay" id="notice-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Publish Campus Notice</h3>
+        <button class="modal-close" onclick="CampusApp.closeModal('notice-modal')">&times;</button>
+      </div>
+      <form onsubmit="CampusApp.submitNotice(event)" class="modal-body">
+        <div class="form-group">
+          <label>Notice Title</label>
+          <input type="text" id="ntc-title" class="form-input" placeholder="e.g. Mid-Term Exam Seating Arrangement" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="ntc-category" class="form-input">
+              <option value="ACADEMIC">Academic</option>
+              <option value="EXAM">Examination</option>
+              <option value="PLACEMENT">Placement</option>
+              <option value="EVENT">Event</option>
+              <option value="GENERAL">General</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="ntc-priority" class="form-input">
+              <option value="HIGH">High / Urgent</option>
+              <option value="MEDIUM" selected>Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Target Audience</label>
+          <select id="ntc-audience" class="form-input">
+            <option value="ALL">Everyone (All Campus)</option>
+            <option value="STUDENTS">Students Only</option>
+            <option value="FACULTY">Faculty & Staff</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notice Content</label>
+          <textarea id="ntc-content" class="form-textarea" rows="4" placeholder="Type notice description here..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="ntc-pinned"> Pin to Top of Notice Board
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-glass" onclick="CampusApp.closeModal('notice-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i data-lucide="send"></i> Post Announcement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Digital Pass QR View Modal -->
+  <div class="modal-overlay" id="pass-modal">
+    <div class="modal-dialog modal-sm text-center">
+      <div class="modal-header">
+        <h3>Digital Event Pass</h3>
+        <button class="modal-close" onclick="CampusApp.closeModal('pass-modal')">&times;</button>
+      </div>
+      <div class="modal-body pass-modal-body" id="pass-modal-content">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-block" onclick="window.print()">
+          <i data-lucide="printer"></i> Print Digital Pass
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Query Response Modal -->
+  <div class="modal-overlay" id="respond-query-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Respond to Student Query</h3>
+        <button class="modal-close" onclick="CampusApp.closeModal('respond-query-modal')">&times;</button>
+      </div>
+      <form onsubmit="CampusApp.submitQueryResponse(event)" class="modal-body">
+        <input type="hidden" id="resp-query-id">
+        <div class="query-preview-box" id="resp-query-preview"></div>
+        <div class="form-group">
+          <label>Status Update</label>
+          <select id="resp-query-status" class="form-input">
+            <option value="RESOLVED">Mark as Resolved</option>
+            <option value="IN_REVIEW">Under Review / In Progress</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Official Response</label>
+          <textarea id="resp-query-text" class="form-textarea" rows="4" placeholder="Enter official administrative resolution..." required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-glass" onclick="CampusApp.closeModal('respond-query-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Submit Response</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>
